@@ -12,7 +12,7 @@
 1. 克隆项目
 ```bash
 git clone <repository-url>
-cd iit_4
+cd iit_11
 ```
 
 2. 安装依赖
