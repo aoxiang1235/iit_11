@@ -5,7 +5,7 @@
 ## 环境要求
 
 - Python 3.8+
-- PostgreSQL
+- MySQL
 
 ## 安装
 
@@ -32,4 +32,4 @@ uvicorn app.main:app --reload
 
 启动服务后，访问以下地址查看API文档：
 - Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc 
+- ReDoc: http://localhost:8000/redoc
