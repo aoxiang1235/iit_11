@@ -6,9 +6,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
-from ..core.database import get_db
-from ..models.user import User
-from ..schemas.auth import UserRole
+from core.database import get_db
+from models.user import User
+from schemas.auth import UserRole
 
 # JWT配置
 SECRET_KEY = "your-secret-key"  # JWT签名密钥，在生产环境中应该使用环境变量
