@@ -1,12 +1,35 @@
-# iit_4
+# IIT Project
 
-这是一个新的项目仓库。
+这是一个基于FastAPI的后端项目。
 
-## 项目描述
-待补充
+## 环境要求
 
-## 功能特点
-待补充
+- Python 3.8+
+- MySQL
 
-## 如何使用
-待补充
+## 安装
+
+1. 克隆项目
+```bash
+git clone <repository-url>
+cd iit_11
+```
+
+2. 安装依赖
+```bash
+pip install -r requirements.txt
+```
+
+3. 配置环境变量
+复制 `.env.example` 到 `.env` 并修改相应的配置
+
+4. 运行项目
+```bash
+uvicorn app.main:app --reload
+```
+
+## API文档
+
+启动服务后，访问以下地址查看API文档：
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
