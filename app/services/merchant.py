@@ -1,144 +1,99 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
+from typing import List, Optional
+from datetime import datetime
+
 from models.merchant import Merchant
-from models.user import User
 from schemas.merchant import MerchantCreate, MerchantUpdate, MerchantApproval
 
 class MerchantService:
     @staticmethod
-    async def create_merchant(db: Session, user_id: int, merchant_data: MerchantCreate) -> Merchant:
-        """
-        创建商家信息
-        
-        Args:
-            db: 数据库会话
-            user_id: 用户ID
-            merchant_data: 商家信息数据
-            
-        Returns:
-            Merchant: 创建的商家信息
-            
-        Raises:
-            HTTPException: 当用户不存在或已经是商家时抛出异常
-        """
-        # 检查用户是否存在
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="用户不存在"
-            )
-            
-        # 检查用户是否已经是商家
-        existing_merchant = db.query(Merchant).filter(Merchant.user_id == user_id).first()
-        if existing_merchant:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="该用户已经是商家"
-            )
-            
-        # 创建商家信息
-        merchant = Merchant(
+    def create_merchant(db: Session, merchant: MerchantCreate, user_id: int) -> Merchant:
+        """创建新商家"""
+        db_merchant = Merchant(
             user_id=user_id,
-            status="pending",  # 初始状态为待审批
-            **merchant_data.model_dump()
+            name=merchant.name,
+            description=merchant.description,
+            address=merchant.address,
+            business_hours=merchant.business_hours,
+            contact_phone=merchant.contact_phone,
+            license_number=merchant.license_number,
+            is_verified=False,
+            is_open=True,
+            status='pending'
         )
-        
-        db.add(merchant)
+        db.add(db_merchant)
         db.commit()
-        db.refresh(merchant)
-        
-        return merchant
-        
-    @staticmethod
-    async def get_merchant(db: Session, merchant_id: int) -> Merchant:
-        """
-        获取商家信息
-        
-        Args:
-            db: 数据库会话
-            merchant_id: 商家ID
-            
-        Returns:
-            Merchant: 商家信息
-            
-        Raises:
-            HTTPException: 当商家不存在时抛出异常
-        """
-        merchant = db.query(Merchant).filter(Merchant.id == merchant_id).first()
-        if not merchant:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="商家不存在"
-            )
-        return merchant
-        
-    @staticmethod
-    async def update_merchant(
-        db: Session,
-        merchant_id: int,
-        merchant_data: MerchantUpdate
-    ) -> Merchant:
-        """
-        更新商家信息
-        
-        Args:
-            db: 数据库会话
-            merchant_id: 商家ID
-            merchant_data: 更新的商家信息
-            
-        Returns:
-            Merchant: 更新后的商家信息
-            
-        Raises:
-            HTTPException: 当商家不存在时抛出异常
-        """
-        merchant = await MerchantService.get_merchant(db, merchant_id)
-        
-        # 更新商家信息
-        for field, value in merchant_data.model_dump(exclude_unset=True).items():
-            setattr(merchant, field, value)
-            
-        db.commit()
-        db.refresh(merchant)
-        
-        return merchant
+        db.refresh(db_merchant)
+        return db_merchant
 
     @staticmethod
-    async def approve_merchant(
-        db: Session,
-        merchant_id: int,
-        approval_data: MerchantApproval
-    ) -> Merchant:
-        """
-        审批商家申请
-        
-        Args:
-            db: 数据库会话
-            merchant_id: 商家ID
-            approval_data: 审批信息
-            
-        Returns:
-            Merchant: 更新后的商家信息
-            
-        Raises:
-            HTTPException: 当商家不存在或状态不正确时抛出异常
-        """
-        merchant = await MerchantService.get_merchant(db, merchant_id)
-        
-        # 检查商家状态是否为待审批
-        if merchant.status != "pending":
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="该商家申请已经被处理"
-            )
-        
-        # 更新商家状态
-        merchant.status = "approved" if approval_data.approved else "rejected"
-        if approval_data.reason:
-            merchant.rejection_reason = approval_data.reason
-            
+    def get_merchant(db: Session, merchant_id: int) -> Optional[Merchant]:
+        """获取商家信息"""
+        return db.query(Merchant).filter(Merchant.id == merchant_id).first()
+
+    @staticmethod
+    def get_merchant_by_user_id(db: Session, user_id: int) -> Optional[Merchant]:
+        """通过用户ID获取商家信息"""
+        return db.query(Merchant).filter(Merchant.user_id == user_id).first()
+
+    @staticmethod
+    def get_merchants(
+        db: Session, 
+        skip: int = 0, 
+        limit: int = 100,
+        is_verified: Optional[bool] = None
+    ) -> List[Merchant]:
+        """获取商家列表"""
+        query = db.query(Merchant)
+        if is_verified is not None:
+            query = query.filter(Merchant.is_verified == is_verified)
+        return query.offset(skip).limit(limit).all()
+
+    @staticmethod
+    def update_merchant(
+        db: Session, 
+        merchant_id: int, 
+        merchant_update: MerchantUpdate
+    ) -> Optional[Merchant]:
+        """更新商家信息"""
+        db_merchant = db.query(Merchant).filter(Merchant.id == merchant_id).first()
+        if not db_merchant:
+            return None
+
+        update_data = merchant_update.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_merchant, field, value)
+
+        db_merchant.updated_at = datetime.utcnow()
         db.commit()
-        db.refresh(merchant)
-        
-        return merchant 
+        db.refresh(db_merchant)
+        return db_merchant
+
+    @staticmethod
+    def approve_merchant(
+        db: Session, 
+        merchant_id: int, 
+        approval: MerchantApproval
+    ) -> Optional[Merchant]:
+        """审核商家"""
+        db_merchant = db.query(Merchant).filter(Merchant.id == merchant_id).first()
+        if not db_merchant:
+            return None
+
+        db_merchant.is_verified = approval.is_approved
+        db_merchant.status = 'approved' if approval.is_approved else 'rejected'
+        db_merchant.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(db_merchant)
+        return db_merchant
+
+    @staticmethod
+    def delete_merchant(db: Session, merchant_id: int) -> bool:
+        """删除商家"""
+        db_merchant = db.query(Merchant).filter(Merchant.id == merchant_id).first()
+        if not db_merchant:
+            return False
+
+        db.delete(db_merchant)
+        db.commit()
+        return True 

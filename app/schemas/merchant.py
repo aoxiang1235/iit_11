@@ -8,9 +8,10 @@ class MerchantBase(BaseModel):
     name: str
     description: Optional[str] = None
     address: str
-    phone: str
-    business_license: str
-    social_preference: SocialPreference
+    business_hours: Optional[str] = None
+    contact_phone: Optional[str] = None
+    license_number: Optional[str] = None
+    is_open: Optional[bool] = True
 
 class MerchantCreate(MerchantBase):
     """创建商家请求"""
@@ -21,15 +22,17 @@ class MerchantUpdate(MerchantBase):
     name: Optional[str] = None
     description: Optional[str] = None
     address: Optional[str] = None
-    phone: Optional[str] = None
-    business_license: Optional[str] = None
-    social_preference: Optional[SocialPreference] = None
+    business_hours: Optional[str] = None
+    contact_phone: Optional[str] = None
+    license_number: Optional[str] = None
+    is_open: Optional[bool] = None
 
 class MerchantResponse(MerchantBase):
     """商家响应"""
     id: int
     user_id: int
-    status: str  # pending, approved, rejected
+    is_verified: bool
+    status: str
     created_at: datetime
     updated_at: datetime
 
@@ -38,5 +41,5 @@ class MerchantResponse(MerchantBase):
 
 class MerchantApproval(BaseModel):
     """商家审批请求"""
-    approved: bool
+    is_verified: bool
     reason: Optional[str] = None 

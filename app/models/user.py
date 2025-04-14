@@ -8,8 +8,8 @@ Base = declarative_base()
 class UserRole(str, PyEnum):
     """用户角色枚举"""
     NORMAL = "normal"
-    ADMIN = "administrator"
-    MERCHANT = "merchant"
+    ADMINISTRATOR = "administrator"
+    MERCHANT = "merchant"  # 修改为小写，与数据库保持一致
 
 class User(Base):
     """
@@ -35,10 +35,10 @@ class User(Base):
     phone_number = Column(String(20))
     
     # 社交偏好，枚举类型，默认值为'None'
-    social_preference = Column(Enum('Lively', 'Quiet', 'Balanced', 'None'), default='None')
+    social_preference = Column(String(8), default='None')
     
     # 用户角色，枚举类型，默认值为'normal'，不能为空
-    role = Column(Enum(UserRole), default=UserRole.NORMAL, nullable=False)
+    role = Column(String(13), default=UserRole.NORMAL, nullable=False)
     
     # 是否禁用，布尔类型，默认值为False
     is_disabled = Column(Boolean, default=False)

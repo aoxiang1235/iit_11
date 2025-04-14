@@ -30,9 +30,9 @@ app.add_middleware(
 )
 
 # 包含认证路由
-app.include_router(auth.router, prefix="/api", tags=["auth"])
-app.include_router(merchant.router)
-app.include_router(store.router)
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(merchant.router, prefix="/api/merchant", tags=["merchant"])
+app.include_router(store.router, prefix="/api/store", tags=["store"])
 
 @app.get("/")
 async def root():
