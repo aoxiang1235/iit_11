@@ -32,3 +32,7 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class UserDisableRequest(BaseModel):
+    """用户禁用状态更新请求模型"""
+    is_disabled: bool  # True 表示禁用，False 表示启用

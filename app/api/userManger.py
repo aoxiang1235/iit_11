@@ -5,7 +5,7 @@ from typing import List
 from core.database import get_db
 from core.auth import get_current_user
 from models.user import User
-from schemas.user import UserResponse
+from schemas.user import UserResponse, UserDisableRequest
 
 router = APIRouter()
 
@@ -38,3 +38,57 @@ async def queryAllUsers(
     # 查询所有用户
     users = db.query(User).all()
     return users
+
+@router.put("/userManger/{user_id}/disable", response_model=UserResponse)
+async def update_user_disable_status(
+    user_id: int,
+    disable_request: UserDisableRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    更新用户禁用状态（仅管理员可用）
+
+    Args:
+        user_id: 要更新的用户ID
+        disable_request: 禁用状态更新请求
+        current_user: 当前登录用户
+        db: 数据库会话
+
+    Returns:
+        UserResponse: 更新后的用户信息
+
+    Raises:
+        HTTPException: 
+            - 当用户不是管理员时抛出403错误
+            - 当目标用户不存在时抛出404错误
+            - 当尝试禁用管理员时抛出400错误
+    """
+    # 检查当前用户是否是管理员
+    if current_user.role != "administrator":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="只有管理员可以修改用户状态"
+        )
+
+    # 查询目标用户
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="用户不存在"
+        )
+
+    # 检查是否尝试禁用管理员
+    if target_user.role == "administrator" and disable_request.is_disabled:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="不能禁用管理员账号"
+        )
+
+    # 更新用户状态
+    target_user.is_disabled = disable_request.is_disabled
+    db.commit()
+    db.refresh(target_user)
+
+    return target_user

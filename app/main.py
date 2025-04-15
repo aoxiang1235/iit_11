@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import auth, store, user
+from api import auth, store, user, userManger
 from core.database import engine
 from models import user as user_model, store as store_model, store_review
 
@@ -33,6 +33,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(store.router, prefix="/api/store", tags=["store"])
 app.include_router(user.router, prefix="/api", tags=["user"])
+app.include_router(userManger.router, prefix="/api", tags=["userManger"])
 
 @app.get("/")
 async def root():

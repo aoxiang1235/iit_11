@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
 from sqlalchemy.ext.declarative import declarative_base
 from enum import Enum as PyEnum
+from fastapi import HTTPException, status
 
 # 创建基类，所有模型类都将继承这个基类
 Base = declarative_base()
@@ -61,6 +62,7 @@ class User(Base):
     
     # 更新时间，默认为当前时间戳，在记录更新时自动更新
     updated_at = Column(DateTime, default=func.current_timestamp(), onupdate=func.current_timestamp())
+
 
 
 
