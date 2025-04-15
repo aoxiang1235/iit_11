@@ -8,11 +8,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api import auth, merchant, store
 from core.database import engine
-from models import user, store as store_model
+from models import user, store as store_model, merchant as merchant_model, product
 
 # 创建数据库表
-user.Base.metadata.create_all(bind=engine)
-store_model.Base.metadata.create_all(bind=engine)
+user.Base.metadata.create_all(bind=engine)  # 先创建 user 表
+merchant_model.Base.metadata.create_all(bind=engine)  # 再创建 merchant 表
+store_model.Base.metadata.create_all(bind=engine)  # 再创建 store 表
+product.Base.metadata.create_all(bind=engine)  # 最后创建 product 表
 
 app = FastAPI(
     title="IIT API",

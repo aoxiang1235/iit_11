@@ -1,7 +1,6 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, ForeignKey, Text
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
 from datetime import datetime
-from .user import Base
+from core.database import Base
 
 class Merchant(Base):
     """
@@ -13,10 +12,10 @@ class Merchant(Base):
 
     # 主键ID，自动递增
     id = Column(Integer, primary_key=True, index=True)
-    
-    # 关联的用户ID，外键
-    user_id = Column(Integer, ForeignKey("user.id"))
-    
+
+    # 用户
+    owner_account = Column(String(200))
+
     # 商户名称，不能为空，最大长度100
     name = Column(String(100), nullable=False)
     
@@ -45,9 +44,4 @@ class Merchant(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # 更新时间，默认为当前时间戳，在记录更新时自动更新
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # 关联关系
-    user = relationship("User")
-    products = relationship("Product", back_populates="merchant")
-    orders = relationship("Order", back_populates="merchant") 
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow) 

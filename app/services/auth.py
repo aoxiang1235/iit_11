@@ -22,13 +22,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    验证密码
-    :param plain_password: 明文密码
-    :param hashed_password: 加密后的密码
-    :return: 密码是否匹配
-    """
-    return pwd_context.verify(plain_password, hashed_password)
+    return plain_password == hashed_password
 
 def get_password_hash(password: str) -> str:
     """
@@ -38,20 +32,21 @@ def get_password_hash(password: str) -> str:
     """
     return pwd_context.hash(password)
 
-def authenticate_user(db: Session, account: str, password: str) -> Optional[User]:
+def authenticate_user(db: Session, username: str, password: str) -> Optional[User]:
     """
     验证用户
     :param db: 数据库会话
-    :param account: 用户账号
+    :param username: 用户名
     :param password: 用户密码
     :return: 验证成功返回用户对象，失败返回None
     """
     # 根据账号查找用户
-    user = db.query(User).filter(User.account == account).first()
+    user = db.query(User).filter(User.username == username).first()
+    print(user.username)
     if not user:
         return None
     # 验证密码
-    if not verify_password(password, user.password):
+    if not password == user.password:
         return None
     # 检查用户是否被禁用
     if user.is_disabled:
