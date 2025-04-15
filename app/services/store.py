@@ -22,7 +22,7 @@ class StoreService:
             HTTPException: 当用户不存在时抛出异常
         """
         # 检查用户是否存在
-        user = db.query(User).filter(User.username == owner_account).first()
+        user = db.query(User).filter(User.account == owner_account).first()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -107,4 +107,9 @@ class StoreService:
         Returns:
             list[Store]: 门店列表
         """
-        return db.query(Store).filter(Store.owner_account == owner_account).all() 
+        return db.query(Store).filter(Store.owner_account == owner_account).all()
+
+    @staticmethod
+    async def queryAllStores(db: Session) -> list[Store]:
+        return db.query(Store).all()
+

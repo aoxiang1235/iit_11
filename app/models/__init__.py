@@ -1,6 +1,5 @@
-from .user import User, UserRole
+from .user import Base, User
 from .store import Store
-from .merchant import Merchant
 from .store_review import StoreReview
 
-__all__ = ['User', 'UserRole', 'Store', 'Merchant', 'StoreReview']
+__all__ = ['User', 'Store', 'StoreReview']

@@ -1,3 +1,5 @@
+from http.client import responses
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -31,7 +33,7 @@ async def apply_store(
     Returns:
         StoreResponse: 创建的门店信息
     """
-    return await StoreService.create_store(db, current_user.username, store_data)
+    return await StoreService.create_store(db, current_user.account, store_data)
 
 @router.get("/{store_id}", response_model=StoreResponse)
 async def get_store(
@@ -94,4 +96,10 @@ async def get_my_stores(
     Returns:
         List[StoreResponse]: 门店列表
     """
-    return await StoreService.get_stores_by_owner(db, current_user.username) 
+    return await StoreService.get_stores_by_owner(db, current_user.username)
+
+@router.get("/all/stores", response_model=List[StoreResponse])
+async def get_my_stores(
+    db: Session = Depends(get_db)
+):
+    return await StoreService.queryAllStores(db)

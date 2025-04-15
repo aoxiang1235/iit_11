@@ -1,14 +1,11 @@
 from datetime import datetime, timedelta
 from typing import Optional
-from jose import JWTError, jwt
+from jose import  jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
-from core.database import get_db
-from models.user import User
-from schemas.auth import UserRole
+from models import User
 
 # JWT配置
 SECRET_KEY = "your-secret-key"  # JWT签名密钥，在生产环境中应该使用环境变量

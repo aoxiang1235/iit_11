@@ -27,14 +27,14 @@ async def get_current_user(
     try:
         # 解码JWT令牌
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        account: str = payload.get("sub")
-        if account is None:
+        username: str = payload.get("sub")
+        if username is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
     
     # 从数据库获取用户
-    user = db.query(User).filter(User.account == account).first()
+    user = db.query(User).filter(User.username == username).first()
     if user is None:
         raise credentials_exception
     
