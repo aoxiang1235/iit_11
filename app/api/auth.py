@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from core.database import get_db
 from schemas.auth import  LoginResponse, RegisterRequest, UserRole
-from schemas.user import User
+from models.user import User
 
 from services.auth import  authenticate_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 
