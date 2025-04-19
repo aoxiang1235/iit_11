@@ -69,13 +69,23 @@ async def update_store(
     Returns:
         StoreResponse: 更新后的门店信息
     """
-    # 检查是否是门店所有者
     store = await StoreService.get_store(db, store_id)
-    if store.owner_account != current_user.account:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="无权修改其他门店的信息"
-        )
+    
+    # 如果是审核操作（修改is_pass字段）
+    if store_data.is_pass is not None:
+        # 只有管理员可以审核
+        if current_user.role != "administrator":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="只有管理员可以审核门店"
+            )
+    else:
+        # 如果是修改其他信息，只有店主可以修改
+        if store.owner_account != current_user.account:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="只有店主可以修改门店信息"
+            )
     
     return await StoreService.update_store(db, store_id, store_data)
 
@@ -97,7 +107,24 @@ async def get_my_stores(
     return await StoreService.get_stores_by_owner(db, current_user.account)
 
 @router.get("/all/stores", response_model=List[StoreResponse])
-async def get_my_stores(
+async def get_all_stores(
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """
+    获取所有门店（管理员专用）
+    
+    Args:
+        current_user: 当前登录用户
+        db: 数据库会话
+        
+    Returns:
+        List[StoreResponse]: 门店列表
+    """
+    # 只有管理员可以查看所有门店
+    if current_user.role != "administrator":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="只有管理员可以查看所有门店"
+        )
     return await StoreService.queryAllStores(db)
