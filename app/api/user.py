@@ -36,4 +36,4 @@ async def queryAllUsers(
     
     # 查询所有用户
     users = db.query(User).all()
-    return users 
+    return [UserResponse.from_orm(user) for user in users] 

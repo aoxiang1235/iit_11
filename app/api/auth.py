@@ -7,7 +7,7 @@ from core.database import get_db
 from schemas.auth import  LoginResponse, RegisterRequest, UserRole
 from schemas.user import User
 
-from services.auth import get_password_hash, authenticate_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
+from services.auth import  authenticate_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 
 # 创建路由器
 router = APIRouter()
@@ -38,7 +38,7 @@ async def register(
         )
     
     # 创建新用户
-    hashed_password = get_password_hash(request.password)
+    hashed_password = request.password
     db_user = User(
         username=request.username,
         account=request.account,

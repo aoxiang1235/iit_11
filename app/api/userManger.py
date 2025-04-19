@@ -5,7 +5,7 @@ from typing import List
 from core.database import get_db
 from core.auth import get_current_user
 from models.user import User
-from schemas.user import UserResponse, UserDisableRequest
+from schemas.user import UserResponse, UserDisableRequest, UserUpdateRequest
 
 router = APIRouter()
 
@@ -37,7 +37,7 @@ async def queryAllUsers(
 
     # 查询所有用户
     users = db.query(User).all()
-    return users
+    return [UserResponse.from_orm(user) for user in users]
 
 @router.put("/userManger/{user_id}/disable", response_model=UserResponse)
 async def update_user_disable_status(
@@ -91,4 +91,45 @@ async def update_user_disable_status(
     db.commit()
     db.refresh(target_user)
 
-    return target_user
+    return UserResponse.from_orm(target_user)
+
+@router.put("/userManger/updateProfile", response_model=UserResponse)
+async def update_user_profile(
+    update_request: UserUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    更新当前用户的信息
+
+    Args:
+        update_request: 用户信息更新请求
+        current_user: 当前登录用户
+        db: 数据库会话
+
+    Returns:
+        UserResponse: 更新后的用户信息
+
+    Raises:
+        HTTPException: 
+            - 当用户被禁用时抛出400错误
+    """
+    # 检查用户是否被禁用
+    if current_user.is_disabled:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="用户已被禁用，无法修改信息"
+        )
+
+    # 更新字段
+    if update_request.phone_number is not None:
+        current_user.phone_number = update_request.phone_number
+    if update_request.social_preference is not None:
+        current_user.social_preference = update_request.social_preference
+
+    # 保存更改
+    db.commit()
+    db.refresh(current_user)
+
+    # 将数据库模型转换为 UserResponse 模型
+    return UserResponse.from_orm(current_user)
