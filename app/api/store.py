@@ -1,5 +1,3 @@
-from http.client import responses
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -73,7 +71,7 @@ async def update_store(
     """
     # 检查是否是门店所有者
     store = await StoreService.get_store(db, store_id)
-    if store.owner_account != current_user.username:
+    if store.owner_account != current_user.account:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="无权修改其他门店的信息"
@@ -96,7 +94,7 @@ async def get_my_stores(
     Returns:
         List[StoreResponse]: 门店列表
     """
-    return await StoreService.get_stores_by_owner(db, current_user.username)
+    return await StoreService.get_stores_by_owner(db, current_user.account)
 
 @router.get("/all/stores", response_model=List[StoreResponse])
 async def get_my_stores(

@@ -1,11 +1,11 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 from schemas.auth import UserRole, SocialPreference
 
 class UserBase(BaseModel):
     username: str
-    email: EmailStr
+    account: str
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
 
@@ -16,7 +16,7 @@ class User(UserBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserResponse(BaseModel):
     """用户信息响应模型"""
@@ -31,7 +31,7 @@ class UserResponse(BaseModel):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserDisableRequest(BaseModel):
     """用户禁用状态更新请求模型"""
