@@ -4,6 +4,7 @@ from models.store import Store
 from models.user import User
 from schemas.store import StoreCreate, StoreUpdate
 from sqlalchemy import create_engine, text
+import requests
 
 class StoreService:
     @staticmethod
@@ -201,4 +202,51 @@ class StoreService:
         for rating, count in result:
             distribution[str(rating)] = count
         return distribution
+
+    @staticmethod
+    async def get_state_stats():
+        """
+        获取各州商家数量统计
+        
+        Returns:
+            list: 各州商家数量统计列表
+        """
+        try:
+            # 构建Elasticsearch聚合查询
+            query = {
+                "size": 0,
+                "aggs": {
+                    "states": {
+                        "terms": {
+                            "field": "location.state",
+                            "size": 50  # 获取前50个州的统计
+                        }
+                    }
+                }
+            }
+            
+            # 发送请求到Elasticsearch
+            response = requests.get(
+                "http://localhost:9200/chicago_yelp_bussinesses_reviewed/_search",
+                headers={"Content-Type": "application/json"},
+                json=query
+            )
+            
+            if response.status_code != 200:
+                print(f"从ES获取数据失败: {response.status_code}")
+                return []
+                
+            data = response.json()
+            if 'aggregations' not in data:
+                print(f"从ES获取数据失败: {data}")
+                return []
+                
+            # 转换数据格式
+            buckets = data['aggregations']['states']['buckets']
+            return [{"name": bucket["key"], "value": bucket["doc_count"]} 
+                    for bucket in buckets]
+                    
+        except Exception as e:
+            print(f"获取州统计数据时出错: {str(e)}")
+            return []
 

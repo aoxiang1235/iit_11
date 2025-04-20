@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import auth, userManger, store, store_review
+from api import auth, userManger, store, store_review, elasticsearch
 
 app = FastAPI(
     title="IIT API",
@@ -28,6 +28,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(store.router, prefix="/api/store", tags=["store"])
 app.include_router(userManger.router, prefix="/api", tags=["userManger"])
 app.include_router(store_review.router, prefix="/api", tags=["store-reviews"])
+app.include_router(elasticsearch.router, prefix="/api/es", tags=["elasticsearch"])
 
 @app.get("/")
 async def root():

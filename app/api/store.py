@@ -181,3 +181,27 @@ async def get_rating_distribution(
         store_id=store_id,
         rating=rating
     )
+
+@router.get("/stats/states")
+async def get_state_stats():
+    """
+    获取各州商家数量统计
+    
+    Returns:
+        list: 各州商家数量统计列表
+            [
+                {
+                    "name": "California",  # 州名
+                    "value": 50000         # 商家数量
+                },
+                {
+                    "name": "Texas",
+                    "value": 20000
+                },
+                {
+                    "name": "Florida",
+                    "value": 5000
+                }
+            ]
+    """
+    return await StoreService.get_state_stats()
