@@ -128,3 +128,56 @@ async def get_all_stores(
             detail="只有管理员可以查看所有门店"
         )
     return await StoreService.queryAllStores(db)
+
+@router.get("/stats/types")
+async def get_store_type_stats(
+    store_id: int = None,
+    db: Session = Depends(get_db)
+):
+    """
+    获取商家类型统计
+    
+    Args:
+        store_id: 可选的商家ID，如果提供则只统计该商家
+        db: 数据库会话
+        
+    Returns:
+        dict: 各类型商家的数量统计
+            {
+                "餐厅": 5,    # 键：商家类型，值：该类型的商家数量
+                "KTV": 3,
+                "咖啡店": 2,
+                ...
+            }
+    """
+    return await StoreService.get_store_type_stats(db, store_id)
+
+@router.get("/stats/ratings")
+async def get_rating_distribution(
+    store_id: int = None,
+    rating: int = None,
+    db: Session = Depends(get_db)
+):
+    """
+    获取评分分布统计
+    
+    Args:
+        store_id: 可选的商家ID，如果提供则只统计该商家的评分
+        rating: 可选的具体评分值（1-5），如果提供则只统计该评分的数量
+        db: 数据库会话
+        
+    Returns:
+        dict: 各评分等级的数量统计
+            {
+                "1": 10,   # 键：评分值（1-5星），值：该评分的数量
+                "2": 20,
+                "3": 30,
+                "4": 40,
+                "5": 50
+            }
+    """
+    return await StoreService.get_rating_distribution(
+        db, 
+        store_id=store_id,
+        rating=rating
+    )
