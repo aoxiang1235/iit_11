@@ -11,7 +11,7 @@ class StoreBase(BaseModel):
     store_hours: Optional[str] = Field(None, max_length=100, description="门店营业时间")
     store_photo: Optional[str] = Field(None, max_length=255, description="门店照片的存储路径或URL")
 
-class StoreCreate(St·oreBase):
+class StoreCreate(StoreBase):
     """创建门店请求模型"""
     pass
 
