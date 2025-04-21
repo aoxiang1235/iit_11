@@ -29,7 +29,6 @@ app.include_router(store.router, prefix="/api/store", tags=["store"])
 app.include_router(userManger.router, prefix="/api", tags=["userManger"])
 app.include_router(store_review.router, prefix="/api", tags=["store-reviews"])
 app.include_router(statistics.router, prefix="/api/statistics", tags=["statistics"])
-
 @app.get("/")
 async def root():
     return {"message": "Welcome to IIT API"} 

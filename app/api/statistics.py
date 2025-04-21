@@ -5,6 +5,27 @@ from elasticsearch import Elasticsearch
 router = APIRouter()
 es = Elasticsearch("http://localhost:9200")
 
+
+@router.get("/rating-distribution")
+async def get_rating_distribution():
+    query = {
+        "size": 0,
+        "aggs": {
+            "ratings": {
+                "terms": {
+                    "field": "rating",
+                    "size": 10
+                }
+            }
+        }
+    }
+
+    result = es.search(index="chicago_yelp_reviews", body=query)
+
+    rating_counts = {f"{round(bucket['key'], 1)}start": bucket['doc_count'] for bucket in result['aggregations']['ratings']['buckets']}
+
+    return rating_counts
+
 @router.get("/business-type-count")
 async def get_business_type_count():
     query = {
