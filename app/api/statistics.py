@@ -5,6 +5,24 @@ from elasticsearch import Elasticsearch
 router = APIRouter()
 es = Elasticsearch("http://localhost:9200")
 
+@router.get("/heatmap")
+async def get_heatmap_data():
+    query = {
+        "size": 1000,  # 根据需要调整大小
+        "_source": ["coordinates"],
+    }
+
+    result = es.search(index="chicago_yelp_reviews", body=query)
+
+    heatmap_data = [
+        {
+            "lat": doc["_source"]["coordinates"]["latitude"],
+            "lng": doc["_source"]["coordinates"]["longitude"]
+        }
+        for doc in result["hits"]["hits"]
+    ]
+
+    return heatmap_data
 
 @router.get("/rating-distribution")
 async def get_rating_distribution():
