@@ -1,0 +1,26 @@
+from fastapi import APIRouter
+from elasticsearch import Elasticsearch
+
+
+router = APIRouter()
+es = Elasticsearch("http://localhost:9200")
+
+@router.get("/business-type-count")
+async def get_business_type_count():
+    query = {
+        "size": 0,
+        "aggs": {
+            "business_types": {
+                "terms": {
+                    "field": "categories.title.keyword",
+                    "size": 10
+                }
+            }
+        }
+    }
+    
+    result = es.search(index="chicago_yelp_reviews", body=query)
+    
+    type_counts = {bucket['key']: bucket['doc_count'] for bucket in result['aggregations']['business_types']['buckets']}
+    
+    return type_counts 
