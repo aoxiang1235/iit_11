@@ -1,7 +1,17 @@
 from fastapi import APIRouter,FastAPI, HTTPException
 from elasticsearch import Elasticsearch
 from typing import List, Dict
+import openai
+from pydantic import BaseModel
+import logging
 
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/statistics",
@@ -10,6 +20,74 @@ router = APIRouter(
 )
 
 es = Elasticsearch("http://localhost:9200")
+
+es1 = Elasticsearch("http://localhost:9201")
+
+class QueryRequest(BaseModel):
+    query_text: str
+
+
+def text_to_vector(texts: str) -> List[float]:
+    # 新版写法：Embeddings（复数）.create
+    response = openai.Embeddings.create(
+        model="text-embedding-ada-002",
+        input=texts
+    )
+    return response["data"][0]["embedding"]
+
+@router.get("/recommend", response_model=List[Dict])
+async def get_recommend(request: QueryRequest):
+    try:
+        # 记录请求开始
+        logger.info(f"收到推荐请求，查询文本: {request.query_text}")
+
+        # 将文本转换为向量
+        logger.debug("开始将查询文本转换为向量")
+        query_vector = text_to_vector(request.query_text)
+        logger.info("文本向量转换完成")
+
+        # 执行向量查询
+        logger.debug("开始执行Elasticsearch向量查询")
+        response = es1.search(
+            index="chicago_yelp_bussinesses_reviewed",
+            body={
+                "size": 5,
+                "query": {
+                    "knn": {
+                        "field": "chicago_yelp_businesses_vector",
+                        "query_vector": query_vector,  # 修复注释掉的代码
+                        "k": 5,
+                        "num_candidates": 50
+                    }
+                }
+            }
+        )
+        logger.info("向量查询完成，返回结果数: %d", len(response["hits"]["hits"]))
+        logger.debug(f"查询响应: {response}")
+
+        # 解析查询结果
+        logger.debug("开始解析查询结果")
+        places = [
+            {
+                "id": hit["_id"],
+                "name": hit["_source"]["name"],
+                "type": hit["_source"]["categories"][0]["title"],
+                "venue": hit["_source"]["location"]["display_address"],
+                "address": hit["_source"]["location"]["display_address"],
+                "rating": hit["_source"]["rating"],
+                "reviewCount": hit["_source"]["review_count"],
+                "coordinates": hit["_source"]["coordinates"]
+            }
+            for hit in response["hits"]["hits"]
+        ]
+        logger.info(f"成功解析 {len(places)} 个推荐地点")
+
+        return places
+
+    except Exception as e:
+        # 记录错误日志
+        logger.error(f"处理推荐请求时发生错误: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 # 定义API端点
 @router.get("/places", response_model=List[Dict])
