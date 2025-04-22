@@ -8,8 +8,8 @@ def register_merchant():
     """注册商家用户"""
     print("\n=== 注册商家用户 ===")
     register_data = {
-        "username": "DavidMerchant",
-        "account": "david@merchant.com",
+        "username": "DavidMerchant1",
+        "account": "david@merchant1.com",
         "password": "hashed_pass4",
         "phone_number": "+86123456789",
         "social_preference": "Balanced"
