@@ -19,7 +19,7 @@ class UserRole(str, Enum):
     """
     NORMAL = "normal"           # 普通用户
     ADMINISTRATOR = "administrator"  # 管理员
-    MERCHANTS = "Merchants"     # 商家
+    MERCHANTS = "Merchants"     # 商户
 
 class LoginRequest(BaseModel):
     """

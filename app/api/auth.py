@@ -4,14 +4,10 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from core.database import get_db
-from schemas.auth import LoginRequest, LoginResponse, RegisterRequest, UserRole, SocialPreference
-from services.auth import (
-    authenticate_user,
-    create_access_token,
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    get_password_hash
-)
+from schemas.auth import  LoginResponse, RegisterRequest, UserRole
 from models.user import User
+
+from services.auth import  authenticate_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 
 # 创建路由器
 router = APIRouter()
@@ -42,7 +38,7 @@ async def register(
         )
     
     # 创建新用户
-    hashed_password = get_password_hash(request.password)
+    hashed_password = request.password
     db_user = User(
         username=request.username,
         account=request.account,
@@ -73,7 +69,7 @@ async def login(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect account or password",
+            detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     # 检查用户是否被禁用
@@ -86,7 +82,7 @@ async def login(
     # 创建访问令牌
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.account},
+        data={"sub": user.username},
         expires_delta=access_token_expires
     )
     

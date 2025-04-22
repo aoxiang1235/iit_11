@@ -1,15 +1,28 @@
-from sqlalchemy import Column, Integer, String, Boolean, Enum, DateTime, func
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
 from sqlalchemy.ext.declarative import declarative_base
 from enum import Enum as PyEnum
 
 # 创建基类，所有模型类都将继承这个基类
 Base = declarative_base()
 
+class SocialPreference(str, PyEnum):
+    """
+    社交偏好枚举类
+    定义用户可选的社交偏好类型
+    """
+    LIVELY = "Lively"      # 活跃型
+    QUIET = "Quiet"        # 安静型
+    BALANCED = "Balanced"  # 平衡型
+    NONE = "None"          # 未设置
+
 class UserRole(str, PyEnum):
-    """用户角色枚举"""
-    NORMAL = "normal"
-    ADMIN = "administrator"
-    MERCHANT = "merchant"
+    """
+    用户角色枚举类
+    定义系统中的用户角色类型
+    """
+    NORMAL = "normal"           # 普通用户
+    ADMINISTRATOR = "administrator"  # 管理员
+    MERCHANTS = "Merchants"     # 商户
 
 class User(Base):
     """
@@ -34,11 +47,11 @@ class User(Base):
     # 电话号码，可以为空，最大长度20
     phone_number = Column(String(20))
     
-    # 社交偏好，枚举类型，默认值为'None'
-    social_preference = Column(Enum('Lively', 'Quiet', 'Balanced', 'None'), default='None')
+    # 社交偏好，字符串类型，默认值为'None'
+    social_preference = Column(String(8), default='None')
     
-    # 用户角色，枚举类型，默认值为'normal'，不能为空
-    role = Column(Enum(UserRole), default=UserRole.NORMAL, nullable=False)
+    # 用户角色，字符串类型，默认值为'normal'，不能为空
+    role = Column(String(13), default='normal', nullable=False)
     
     # 是否禁用，布尔类型，默认值为False
     is_disabled = Column(Boolean, default=False)
@@ -47,4 +60,8 @@ class User(Base):
     created_at = Column(DateTime, default=func.current_timestamp())
     
     # 更新时间，默认为当前时间戳，在记录更新时自动更新
-    updated_at = Column(DateTime, default=func.current_timestamp(), onupdate=func.current_timestamp()) 
+    updated_at = Column(DateTime, default=func.current_timestamp(), onupdate=func.current_timestamp())
+
+
+
+

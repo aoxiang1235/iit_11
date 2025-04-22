@@ -12,6 +12,8 @@ class Store(Base):
     # 主键ID，自动递增
     id = Column(Integer, primary_key=True, autoincrement=True, comment='自增主键，用于唯一标识每个门店')
     
+    store_name = Column(String(100), nullable=False, comment='门店名称')
+
     # 门店类型，不能为空，最大长度50
     store_type = Column(String(50), nullable=False, comment='门店类型，例如餐厅、零售店')
     
