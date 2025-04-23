@@ -1,9 +1,12 @@
-from fastapi import APIRouter,FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException, Query, Depends
 from elasticsearch import Elasticsearch
-from typing import List, Dict
+from typing import List, Dict, Optional
 import openai
 from pydantic import BaseModel
 import logging
+
+from core.auth import get_current_user
+from models import User
 
 # 配置日志
 logging.basicConfig(
@@ -18,9 +21,10 @@ router = APIRouter(
     tags=["statistics"],
     responses={404: {"description": "Not found"}},
 )
-
+#Two different images chicago_yelp_reviews
+#Search page with
 es = Elasticsearch("http://localhost:9200")
-
+#Recommended query
 es1 = Elasticsearch("http://localhost:9201")
 
 class QueryRequest(BaseModel):
@@ -36,16 +40,19 @@ def text_to_vector(texts: str) -> List[float]:
     return response["data"][0]["embedding"]
 
 @router.get("/recommend", response_model=List[Dict])
-async def get_recommend(request: QueryRequest):
+async def get_recommend(
+        request: QueryRequest,
+        current_user: User = Depends(get_current_user)
+):
     try:
         # 记录请求开始
-        logger.info(f"收到推荐请求，查询文本: {request.query_text}")
-
+        logger.info(f"收到推荐请求，查询文本Received recommendation request, query text: {request.query_text}")
         # 将文本转换为向量
-        logger.debug("开始将查询文本转换为向量")
-        query_vector = text_to_vector(request.query_text)
-        logger.info("文本向量转换完成")
-
+        logger.debug("开始将查询文本转换为向量 Start converting query text into vectors")
+        logger.debug("If no information is entered, then get the user's information for recommendation")
+        search_text = request.query_text if request.query_text else current_user.social_preferen
+        query_vector = text_to_vector(search_text)
+        logger.info("文本向量转换完成Text vector conversion completed")
         # 执行向量查询
         logger.debug("开始执行Elasticsearch向量查询")
         response = es1.search(
@@ -91,15 +98,62 @@ async def get_recommend(request: QueryRequest):
 
 # 定义API端点
 @router.get("/places", response_model=List[Dict])
-async def get_places():
+async def get_places(
+        search: Optional[str] = Query(None, description="搜索关键词"),
+        zip_code: Optional[str] = Query(None, description="邮政编码"),
+        categories: Optional[str] = Query(None, description="类别，多个类别用逗号分隔"),
+        limit: int = Query(10, description="返回结果数量限制"),
+        offset: int = Query(0, description="分页偏移量"),
+        user_id: Optional[str] = Query(None, description="用户ID")
+):
     try:
-        response = es.search(index="chicago_yelp_reviews", body={
+        # 构建查询
+        query = {
+            "size": limit,
+            "from": offset,
             "query": {
-                "match": {
-                    "location.city": "Chicago"
+                "bool": {
+                    "must": [
+                        {"match": {"location.city": "Chicago"}}
+                    ]
                 }
             }
-        })
+        }
+
+        # 如果有搜索关键词，添加全文搜索条件
+        if search:
+            query["query"]["bool"]["must"].append({
+                "multi_match": {
+                    "query": search,
+                    "fields": ["name^3", "categories.title^2", "location.display_address"],
+                    "type": "best_fields",
+                    "fuzziness": "AUTO"
+                }
+            })
+
+        # 如果有邮政编码，添加邮政编码过滤
+        if zip_code:
+            query["query"]["bool"]["must"].append({
+                "match": {
+                    "location.zip_code": zip_code
+                }
+            })
+        # 如果有类别，添加类别过滤
+        if categories:
+            # 将逗号分隔的类别转换为列表
+            category_list = [cat.strip() for cat in categories.split(",")]
+            query["query"]["bool"]["must"].append({
+                "terms": {
+                    "categories.title": category_list
+                }
+            })
+
+        # 添加排序
+        query["sort"] = [
+            {"rating": {"order": "desc"}},
+            {"review_count": {"order": "desc"}}
+        ]
+        response = es.search(index="chicago_yelp_reviews", body=query)
         places = [
             {
                 "id": hit["_id"],
@@ -113,20 +167,77 @@ async def get_places():
             }
             for hit in response["hits"]["hits"]
         ]
+        # 记录搜索历史 search_history
+        if user_id:
+            search_params = {
+                "search": search,
+                "zip_code": zip_code,
+                "categories": categories,
+                "limit": limit,
+                "offset": offset
+            }
         return places
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/events", response_model=List[Dict])
-async def get_events():
+async def get_events(
+search: Optional[str] = Query(None, description="搜索关键词"),
+    zip_code: Optional[str] = Query(None, description="邮政编码"),
+    categories: Optional[str] = Query(None, description="类别，多个类别用逗号分隔"),
+    limit: int = Query(10, description="返回结果数量限制"),
+    offset: int = Query(0, description="分页偏移量")
+):
     try:
-        response = es.search(index="chicago_yelp_reviews", body={
+        # 构建查询
+        query = {
+            "size": limit,
+            "from": offset,
             "query": {
-                "match": {
-                    "location.city": "Chicago"
+                "bool": {
+                    "must": [
+                        {"match": {"location.city": "Chicago"}}
+                    ]
                 }
             }
-        })
+        }
+
+        # 如果有搜索关键词，添加全文搜索条件
+        if search:
+            query["query"]["bool"]["must"].append({
+                "multi_match": {
+                    "query": search,
+                    "fields": ["name^3", "categories.title^2", "location.display_address"],
+                    "type": "best_fields",
+                    "fuzziness": "AUTO"
+                }
+            })
+
+        # 如果有邮政编码，添加邮政编码过滤
+        if zip_code:
+            query["query"]["bool"]["must"].append({
+                "match": {
+                    "location.zip_code": zip_code
+                }
+            })
+
+        # 如果有类别，添加类别过滤
+        if categories:
+            # 将逗号分隔的类别转换为列表
+            category_list = [cat.strip() for cat in categories.split(",")]
+            query["query"]["bool"]["must"].append({
+                "terms": {
+                    "categories.title": category_list
+                }
+            })
+
+        # 添加排序
+        query["sort"] = [
+            {"rating": {"order": "desc"}},
+            {"review_count": {"order": "desc"}}
+        ]
+
+        response = es.search(index="chicago_yelp_reviews", body=query)
         events = [
             {
                 "id": hit["_id"],
@@ -140,31 +251,6 @@ async def get_events():
             for hit in response["hits"]["hits"]
         ]
         return events
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/divvy-stations", response_model=List[Dict])
-async def get_divvy_stations():
-    try:
-        response = es.search(index="chicago_yelp_reviews", body={
-            "query": {
-                "match": {
-                    "location.city": "Chicago"
-                }
-            }
-        })
-        stations = [
-            {
-                "id": hit["_id"],
-                "name": hit["_source"]["name"],
-                 "status": "Active" if not hit["_source"].get("is_closed", True) else "Inactive",
-                "availableBikes": hit["_source"].get("availableBikes", 0),
-                "totalDocks": hit["_source"].get("totalDocks", 0),
-                "coordinates": hit["_source"]["coordinates"]
-            }
-            for hit in response["hits"]["hits"]
-        ]
-        return stations
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

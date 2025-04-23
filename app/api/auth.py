@@ -75,7 +75,7 @@ async def login(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    # 单例模式生成访问令牌
+    # 单例模式生成访问令牌 Generate access token in Singleton Pattern
     token_manager = TokenManager()
     access_token = token_manager.create_token({"sub": user.username})
     
@@ -90,7 +90,7 @@ async def login(
     ) 
 
 
-# 策略模式：密码验证策略接口与实现
+# 策略模式：密码验证策略接口与实现。Strategy pattern: password verification strategy interface and implementation
 class PasswordStrategy(ABC):
     @abstractmethod
     def verify(self, plain_password: str, stored_password: str) -> bool:
@@ -111,7 +111,7 @@ class PasswordContext:
     def verify(self, plain_password: str, stored_password: str) -> bool:
         return self._strategy.verify(plain_password, stored_password)
 
-# 工厂模式：用户创建工厂
+# 工厂模式：用户创建工厂 Factory pattern: users create factories
 class UserFactory:
     @staticmethod
     def create(request: RegisterRequest) -> User:
@@ -124,7 +124,7 @@ class UserFactory:
             role=UserRole.NORMAL
         )
 
-# 单例模式：Token 管理器
+# 单例模式：Token 管理器 Singleton Pattern: Token Manager
 class SingletonMeta(type):
     _instances = {}
     def __call__(cls, *args, **kwargs):
