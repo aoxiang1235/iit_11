@@ -2,13 +2,13 @@ fastapi==0.109.2
 uvicorn==0.27.1
 sqlalchemy==2.0.27
 pydantic==2.6.1
-python-jose==3.3.0
+python-jose[cryptography]==3.3.0
 passlib==1.7.4
 bcrypt==4.1.2
 python-multipart==0.0.9
 openai==1.12.0
 python-dotenv==1.0.1
 requests==2.31.0
-email-validator>=2.0.0
+email-validator==2.0.0
 elasticsearch==8.12.0
-requests
+pymysql==1.0.3
